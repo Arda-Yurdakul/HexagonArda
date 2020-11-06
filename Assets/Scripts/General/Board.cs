@@ -151,13 +151,17 @@ public class Board : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                Hex newHex = PlaceHexAt(x, y);
-                while(FindMatches() != null)
+                if(allTiles[x, y].currentHex == null)
                 {
-                    print("Found match, reshuffling");
-                    Destroy(newHex.gameObject);
-                    newHex = PlaceHexAt(x, y);
+                    Hex newHex = PlaceHexAt(x, y);
+                    while (FindMatches() != null)
+                    {
+                        print("Found match, reshuffling");
+                        Destroy(newHex.gameObject);
+                        newHex = PlaceHexAt(x, y);
+                    }
                 }
+               
             }
         }
     }
@@ -234,7 +238,7 @@ public class Board : MonoBehaviour
         ShiftHex(hex0, tile1);
         ShiftHex(hex1, tile2);
         ShiftHex(hex2, tile0);
-        StartCoroutine(ClearAndCollapseRoutine());
+        StartCoroutine(ClearCollapseAndRefillRoutine());
 
     }
 
@@ -268,7 +272,7 @@ public class Board : MonoBehaviour
         ShiftHex(hex0, tile2);
         ShiftHex(hex1, tile0);
         ShiftHex(hex2, tile1);
-        StartCoroutine(ClearAndCollapseRoutine());
+        StartCoroutine(ClearCollapseAndRefillRoutine());
 
     }
 
@@ -385,6 +389,7 @@ public class Board : MonoBehaviour
                         allHexes[column, i].Init(column, i, this);
                         allTiles[column, i].currentHex = allHexes[column, i];
                         allHexes[column, j] = null;
+                        allTiles[column, j].currentHex = null;
                         break;
                     }
                 }
@@ -401,5 +406,12 @@ public class Board : MonoBehaviour
             CollapseAllColumns();
             yield return new WaitForSeconds(0.5f);
         }
+    }
+
+    private IEnumerator ClearCollapseAndRefillRoutine()
+    {
+        yield return StartCoroutine(ClearAndCollapseRoutine());
+        yield return new WaitForSeconds(2f);
+        SetupHexes();
     }
 }
