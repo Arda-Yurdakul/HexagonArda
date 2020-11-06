@@ -9,6 +9,7 @@ public class Tile : MonoBehaviour
     public int xIndex { get; set; }
     public int yIndex { get; set; }
     private Board m_board;
+    public Hex currentHex;
 
     public void Init(int x, int y, Board board)
     {
@@ -28,10 +29,5 @@ public class Tile : MonoBehaviour
     void Update()
     {
         
-    }
-
-    private void OnMouseDown()
-    {
-        print("Tile: " + xIndex + "," + yIndex);
     }
 }

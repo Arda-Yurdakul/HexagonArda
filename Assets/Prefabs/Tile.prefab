@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4612451118987739858}
   - component: {fileID: 4612451118987739857}
   - component: {fileID: 6496796625670520211}
-  - component: {fileID: -6362266784678718678}
   m_Layer: 0
   m_Name: Tile
   m_TagString: Untagged
@@ -74,7 +73,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: dd9291e362233a949a88699527b1bed9, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.16470589}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -96,19 +95,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 061c78917086c214082566204ca39e2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!58 &-6362266784678718678
-CircleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4612451118987739856}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0.005586028, y: 0}
-  serializedVersion: 2
-  m_Radius: 0.53635764
+  currentHex: {fileID: 0}

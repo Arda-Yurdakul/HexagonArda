@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,14 +12,16 @@ public enum JointType
 
 public class Joint : MonoBehaviour
 {
-    private List<Tile> jointTiles;
+    public List<Tile> jointTiles;
+    private Board m_board;
 
     public JointType jointType;
 
-    public void Init(List<Tile> tiles, JointType jType)
+    public void Init(List<Tile> tiles, JointType jType, Board board)
     {
         jointTiles = tiles;
         jointType = jType;
+        m_board = board;
     }
 
     // Start is called before the first frame update
@@ -33,8 +36,4 @@ public class Joint : MonoBehaviour
         
     }
 
-    public void Rotate()
-    {
-        print("Rotating");
-    }
 }
