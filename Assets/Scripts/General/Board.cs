@@ -27,6 +27,7 @@ public class Board : MonoBehaviour
     private List<Joint> allJoints;
     private Joint selectedJoint;
     private Vector3 offset = new Vector3(0.2f, 0, 0);
+    private int speed = 480;
     private bool matchMade;
     private bool inputBlocked;
     private bool bombSpawn;
@@ -289,9 +290,9 @@ public class Board : MonoBehaviour
         Tile tile2 = selectedJoint.jointTiles[2];
         Hex hex2 = allHexes[tile2.xIndex, tile2.yIndex];
 
-        ShiftHex(hex0, tile1);
-        ShiftHex(hex1, tile2);
-        ShiftHex(hex2, tile0);
+        StartCoroutine(ShiftHex(hex0, tile1, -1));
+        StartCoroutine(ShiftHex(hex1, tile2, -1));
+        StartCoroutine(ShiftHex(hex2, tile0, -1));
         StartCoroutine(ClearCollapseAndRefillRoutine());
 
     }
@@ -327,18 +328,18 @@ public class Board : MonoBehaviour
         Tile tile2 = selectedJoint.jointTiles[2];
         Hex hex2 = allHexes[tile2.xIndex, tile2.yIndex];
 
-        ShiftHex(hex0, tile2);
-        ShiftHex(hex1, tile0);
-        ShiftHex(hex2, tile1);
+        StartCoroutine(ShiftHex(hex0, tile2, 1));
+        StartCoroutine(ShiftHex(hex1, tile0, 1));
+        StartCoroutine(ShiftHex(hex2, tile1, 1));
         StartCoroutine(ClearCollapseAndRefillRoutine());
 
     }
 
-    private void ShiftHex(Hex hex, Tile tile)
+    private IEnumerator ShiftHex(Hex hex, Tile tile, int dir)
     {
         if(hex != null)
         {
-            hex.transform.position = tile.transform.position;
+            yield return StartCoroutine(Rotate120(hex, selectedJoint, tile, dir));
             allHexes[tile.xIndex, tile.yIndex] = hex;
             hex.Init(tile.xIndex, tile.yIndex, this);
             tile.currentHex = hex;
@@ -521,5 +522,23 @@ public class Board : MonoBehaviour
             Destroy(hex);
             AudioManager.Instance.PlayBoomSFX();
         }
+    }
+
+    public IEnumerator Rotate120(Hex hex, Joint joint, Tile tile, int dir)
+    {
+        float timer = 0;
+        while (timer < 0.25f && !matchMade)
+        {
+            hex.transform.RotateAround(joint.transform.position, new Vector3(0, 0, dir), speed * Time.deltaTime);
+            yield return null;
+            timer += Time.deltaTime;
+        }
+
+        if(hex!= null)
+        {
+            hex.transform.position = tile.transform.position;
+            hex.transform.rotation = Quaternion.identity;
+        }
+
     }
 }
