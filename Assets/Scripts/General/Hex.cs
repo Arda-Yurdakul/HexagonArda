@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Hex : MonoBehaviour
+public class Hex : MonoBehaviour, IGridElement
 {
     public int xIndex { get; set; }
     public int yIndex { get; set; }

@@ -2,17 +2,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditorInternal;
 using UnityEngine;
 
 public class Board : MonoBehaviour
 {
+    [Header("Board Settings")]
     [SerializeField] private int width = 9;
     [SerializeField] private int height = 8;
-    [SerializeField] private float borderSize = 1;
+    [SerializeField] [Tooltip("In Unity units")] private float borderSize = 1;
+
+
+    [Header("Prefabs")]
     [SerializeField] private GameObject tilePrefab;
     [SerializeField] private GameObject jointPrefab;
     [SerializeField] private GameObject highlightPrefab;
+    [SerializeField] private GameObject particlePrefab;
     [SerializeField] private GameObject[] hexPrefabs;
+    [SerializeField] private GameObject[] bombPrefabs;
+    
 
     public Tile[,] allTiles;
     public Hex[,] allHexes;
@@ -20,10 +28,16 @@ public class Board : MonoBehaviour
     private Joint selectedJoint;
     private Vector3 offset = new Vector3(0.2f, 0, 0);
     private bool matchMade;
+    private bool inputBlocked;
+    private bool bombSpawn;
+    GameManager gameManager;
 
     void Start()
     {
+        gameManager = FindObjectOfType<GameManager>();
         matchMade = false;
+        inputBlocked = false;
+        bombSpawn = false;
         allTiles = new Tile[width, height];
         allHexes = new Hex[width, height];
         allJoints = new List<Joint>();
@@ -110,8 +124,11 @@ public class Board : MonoBehaviour
 
     private void SetupCamera()
     {
-        float aspectRatio = (float)Screen.width / (float)Screen.height;
-        Camera.main.orthographicSize /= aspectRatio;
+        float aspectRatio = ((float)Screen.width / (float)Screen.height);
+        float horizontalSize = ((width)) / aspectRatio;
+        float verticalSize = (height * 1.33f);
+        Camera.main.orthographicSize = Mathf.Max(horizontalSize, verticalSize);
+        Camera.main.transform.position = new Vector3((float)(width / 1.5f), (float)(height / 1.5f), -10f);
     }
 
     private void SetupBoard()
@@ -145,20 +162,41 @@ public class Board : MonoBehaviour
         }
     }
 
-    private void SetupHexes()
+    private void SetupHexes(int offset = 0)
     {
+        if(gameManager.gameState != GameState.Running)
+        {
+            return;
+        }
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 if(allTiles[x, y].currentHex == null)
                 {
-                    Hex newHex = PlaceHexAt(x, y);
-                    while (FindMatches() != null)
+                    Hex newHex;
+                    if (!bombSpawn)
                     {
-                        print("Found match, reshuffling");
-                        Destroy(newHex.gameObject);
-                        newHex = PlaceHexAt(x, y);
+                        newHex = PlaceHexAt(x, y, offset);
+                        int iters = 0;
+                        while (FindMatches() != null && iters < 20)
+                        {
+                            iters++;
+                            Destroy(newHex.gameObject);
+                            newHex = PlaceHexAt(x, y);
+                        }
+                    }
+                    else
+                    {
+                        bombSpawn = false;
+                        newHex = PlaceHexAt(x, y, offset, true);
+                    }
+                    
+
+                    if (offset != 0)
+                    {
+                        newHex.MoveHex(allTiles[x, y].transform.position.x, allTiles[x, y].transform.position.y, 0.15f);
                     }
                 }
                
@@ -166,11 +204,21 @@ public class Board : MonoBehaviour
         }
     }
 
-    private Hex PlaceHexAt(int x, int y)
+    private Hex PlaceHexAt(int x, int y, int offset = 0, bool bomb = false)
     {
         Tile tile = allTiles[x, y];
         int rand = UnityEngine.Random.Range(0, hexPrefabs.Length);
-        GameObject hex = Instantiate(hexPrefabs[rand], tile.transform.position, Quaternion.identity);
+
+        GameObject hex;
+        if (!bomb)
+        {
+            hex = Instantiate(hexPrefabs[rand], tile.transform.position + new Vector3(0, offset, 0), Quaternion.identity);
+        }
+        else
+        {
+            hex = Instantiate(bombPrefabs[rand], tile.transform.position + new Vector3(0, offset, 0), Quaternion.identity); 
+        }
+
         hex.transform.parent = transform.Find("Hexes");
         hex.name = "Hex(" + x + "," + y + ")";
         hex.GetComponent<Hex>().Init(x, y, this);
@@ -181,49 +229,55 @@ public class Board : MonoBehaviour
 
     public Joint FindAndSelectNearestJoint(Vector3 pos)
     {
-        if(selectedJoint != null)
+        if (!inputBlocked)
         {
-            selectedJoint.gameObject.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
-            var highLight = GameObject.FindGameObjectWithTag("Highlight");
-            DestroyImmediate(highLight);
-        }
-        Vector2 twoDimPos = pos;
-        Joint nearestJoint = null;
-        float minDist = Mathf.Infinity;
-
-        foreach(Joint joint in allJoints)
-        {
-            Vector2 jointPos = joint.transform.position;
-            float newDist = Vector2.Distance(twoDimPos, jointPos);
-            if(newDist < minDist)
+            if (selectedJoint != null)
             {
-                minDist = newDist;
-                nearestJoint = joint;
+                selectedJoint.gameObject.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+                var highLight = GameObject.FindGameObjectWithTag("Highlight");
+                DestroyImmediate(highLight);
             }
-        }
+            Vector2 twoDimPos = pos;
+            Joint nearestJoint = null;
+            float minDist = Mathf.Infinity;
 
-        if(nearestJoint != null)
-        {
-            SpriteRenderer jointColor = nearestJoint.gameObject.GetComponent<SpriteRenderer>();
-            jointColor.color = new Color(255, 255, 255, 255);
-            selectedJoint = nearestJoint;
-            if(nearestJoint.jointType == JointType.left)
+            foreach (Joint joint in allJoints)
             {
-                GameObject jointHighlight = Instantiate(highlightPrefab, selectedJoint.transform.position - offset, Quaternion.identity);
-                jointHighlight.GetComponent<SpriteRenderer>().flipX = true;
+                Vector2 jointPos = joint.transform.position;
+                float newDist = Vector2.Distance(twoDimPos, jointPos);
+                if (newDist < minDist)
+                {
+                    minDist = newDist;
+                    nearestJoint = joint;
+                }
             }
+
+            if (nearestJoint != null)
+            {
+                SpriteRenderer jointColor = nearestJoint.gameObject.GetComponent<SpriteRenderer>();
+                jointColor.color = new Color(255, 255, 255, 255);
+                selectedJoint = nearestJoint;
+                if (nearestJoint.jointType == JointType.left)
+                {
+                    GameObject jointHighlight = Instantiate(highlightPrefab, selectedJoint.transform.position - offset, Quaternion.identity);
+                    jointHighlight.GetComponent<SpriteRenderer>().flipX = true;
+                }
+                else
+                {
+                    GameObject jointHighlight = Instantiate(highlightPrefab, selectedJoint.transform.position + offset, Quaternion.identity);
+                }
+
+                return nearestJoint;
+            }
+
             else
             {
-                GameObject jointHighlight = Instantiate(highlightPrefab, selectedJoint.transform.position + offset, Quaternion.identity);
+                throw new ApplicationException();
             }
-
-            return nearestJoint;
         }
 
-        else
-        {
-            throw new ApplicationException();
-        }
+        return null;
+        
     }
 
     internal void RotateClockwise()
@@ -248,13 +302,17 @@ public class Board : MonoBehaviour
         if (matchJoint != null)
         {
             matchMade = true;
-            print("Destroyed");
+            AudioManager.Instance.PlayScoreSFX();
+            GameObject particle = Instantiate(particlePrefab, matchJoint.transform.position, Quaternion.Euler(0, 180, 0));
+            particle.GetComponent<ParticleSystem>().startColor = allHexes[matchJoint.jointTiles[0].xIndex, matchJoint.jointTiles[0].yIndex].GetComponent<SpriteRenderer>().color;
+            selectedJoint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+            Destroy(GameObject.FindGameObjectWithTag("Highlight"));
+
             foreach (Tile tile in matchJoint.jointTiles)
             {
                 Destroy(allHexes[tile.xIndex, tile.yIndex].gameObject);
                 allHexes[tile.xIndex, tile.yIndex] = null;
-                Destroy(GameObject.FindGameObjectWithTag("Highlight"));
-                selectedJoint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+                gameManager.IncreaseScore();
             }
         }
     }
@@ -324,38 +382,64 @@ public class Board : MonoBehaviour
 
     public IEnumerator RotateClockwiseAndClearRoutine()
     {
-        yield return null;
-        RotateClockwise();
-        if (!matchMade)
+        if (!inputBlocked)
         {
-            yield return new WaitForSeconds(0.5f);
-            RotateClockwise();
-            if (!matchMade)
+            inputBlocked = true;
+            yield return null;
+            matchMade = false;
+            int cycles = 0;
+            do
             {
-                yield return new WaitForSeconds(0.5f);
+                cycles++;
                 RotateClockwise();
+                yield return new WaitForSeconds(0.5f);
             }
-        }
+            while (!matchMade && cycles < 3);
 
-        matchMade = false;
+
+            if (matchMade)
+            {
+                gameManager.IncreaseMoves();
+                Bomb bomb = FindObjectOfType<Bomb>();
+                if(bomb!= null)
+                {
+                    bomb.DecreaseTimer();
+                }
+            }
+            matchMade = false;
+            inputBlocked = false;
+        }
+        
     }
 
     public IEnumerator RotateCounterAndClearRoutine()
     {
-        yield return null;
-        RotateCounterClockwise();
-        if (!matchMade)
+        if (!inputBlocked)
         {
-            yield return new WaitForSeconds(0.5f);
-            RotateCounterClockwise();
-            if (!matchMade)
+            yield return null;
+            inputBlocked = true;
+            matchMade = false;
+            int cycles = 0;
+            do
             {
-                yield return new WaitForSeconds(0.5f);
+                cycles++;
                 RotateCounterClockwise();
+                yield return new WaitForSeconds(0.5f);
             }
-        }
+            while (!matchMade && cycles < 3);
 
-        matchMade = false;
+            if (matchMade)
+            {
+                gameManager.IncreaseMoves();
+                Bomb bomb = FindObjectOfType<Bomb>();
+                if (bomb != null)
+                {
+                    bomb.DecreaseTimer();
+                }
+            }
+            matchMade = false;
+            inputBlocked = false;
+        }
     }
 
     public void PlaceHex(Hex hex, Vector3 target)
@@ -379,7 +463,6 @@ public class Board : MonoBehaviour
         {
             if (allHexes[column, i] == null)
             {
-                print(allTiles[column, i].name);
                 for (int j = i + 1; j < height; j++)
                 {
                     if (allHexes[column, j] != null)
@@ -399,19 +482,44 @@ public class Board : MonoBehaviour
 
     private IEnumerator ClearAndCollapseRoutine()
     {
-        while(FindMatches() != null)
+        int num_iters = 0;
+        while(FindMatches() != null && num_iters < 10)
         {
             ClearMatch();
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.2f);
             CollapseAllColumns();
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.3f);
+            num_iters++;
+            if (num_iters == 10)
+            {
+                print("I am stuck!");
+            }
         }
     }
 
     private IEnumerator ClearCollapseAndRefillRoutine()
     {
+        bombSpawn = false;
         yield return StartCoroutine(ClearAndCollapseRoutine());
-        yield return new WaitForSeconds(2f);
-        SetupHexes();
+        yield return new WaitForSeconds(0.25f);
+        SetupHexes(5);
+    }
+
+    internal void SpawnBomb()
+    {
+        bombSpawn = true;
+    }
+
+    internal void ClearBoard()
+    {
+        GameObject[] hexes = GameObject.FindGameObjectsWithTag("Hex");
+        foreach(GameObject hex in hexes)
+        {
+            GameObject particle = Instantiate(particlePrefab, hex.transform.position, Quaternion.Euler(0, 180, 0));
+            ParticleSystem.MainModule main = particle.GetComponent<ParticleSystem>().main;
+            main.startColor = hex.GetComponent<SpriteRenderer>().color;
+            Destroy(hex);
+            AudioManager.Instance.PlayBoomSFX();
+        }
     }
 }

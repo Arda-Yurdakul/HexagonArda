@@ -10,6 +10,7 @@ public enum JointType
     left
 }
 
+[RequireComponent(typeof(SpriteRenderer))]
 public class Joint : MonoBehaviour
 {
     public List<Tile> jointTiles;

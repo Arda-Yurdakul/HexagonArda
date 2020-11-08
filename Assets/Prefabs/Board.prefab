@@ -141,9 +141,12 @@ MonoBehaviour:
   borderSize: 1
   tilePrefab: {fileID: 4612451118987739856, guid: 57b0cf91729281145ba0ce02a1fc0262, type: 3}
   jointPrefab: {fileID: 4205153934113430741, guid: ff7536bd792a359479c2e513ba7a4706, type: 3}
+  highlightPrefab: {fileID: 3443765951284679601, guid: cdc86a1eeed505140878c63c7dbf8293, type: 3}
   hexPrefabs:
   - {fileID: 9114878889493575862, guid: fbb51b826bcc84a41b94f4718d06f771, type: 3}
   - {fileID: 9114878889493575862, guid: 576219a983e3794499f9d83bd8ce7209, type: 3}
   - {fileID: 9114878889493575862, guid: a4aff3bc723d25e4e888e247945dca00, type: 3}
   - {fileID: 9114878889493575862, guid: 1eaea3b39f0e86649be93a14ea7e2ecd, type: 3}
   - {fileID: 9114878889493575862, guid: a546968a49ea85c4fb42a24b0b3ac604, type: 3}
+  bombPrefab: {fileID: 3238598364179158034, guid: 128b33d90bb616245a254d7fe9c0ea26, type: 3}
+  particlePrefab: {fileID: 2050465116805381882, guid: e162b9873098668408bd48d87d021a44, type: 3}

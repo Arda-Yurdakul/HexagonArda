@@ -10,10 +10,12 @@ public class InputManager : MonoBehaviour
 
     private Joint jointSelected;
     private Board board;
-        
+    GameManager gameManager;
+
     // Start is called before the first frame update
     void Start()
     {
+        gameManager = FindObjectOfType<GameManager>();
         board = FindObjectOfType<Board>();
         jointSelected = null;
     }
@@ -21,9 +23,12 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        JointSelection();
-        RotateSelectedJoint();
-        CollapseAll();
+        if(gameManager.gameState == GameState.Running)
+        {
+            JointSelection();
+            RotateSelectedJoint();
+            CollapseAll();
+        }
     }
 
     private void CollapseAll()

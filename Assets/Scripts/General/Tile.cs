@@ -4,7 +4,7 @@ using UnityEngine;
 
 
 [SelectionBase]
-public class Tile : MonoBehaviour
+public class Tile : MonoBehaviour, IGridElement
 {
     public int xIndex { get; set; }
     public int yIndex { get; set; }
