@@ -2,15 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InputManager : MonoBehaviour
 {
-    Vector3 mousePos;
+    Vector3 clickPos;
     Vector3 worldPosition;
 
     private Joint jointSelected;
     private Board board;
     GameManager gameManager;
+
+    private Vector2 firstTouch;
+    public Vector2 lastTouch;
 
     // Start is called before the first frame update
     void Start()
@@ -25,38 +29,28 @@ public class InputManager : MonoBehaviour
     {
         if(gameManager.gameState == GameState.Running)
         {
-            JointSelection();
-            RotateSelectedJoint();
-            CollapseAll();
+            GetInput();
         }
     }
 
-    private void CollapseAll()
+    private void GetInput()
     {
-        if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            board.CollapseAllColumns();
-        }
-    }
 
-    private void RotateSelectedJoint()
-    {
-        if(Input.GetKeyDown(KeyCode.D) && jointSelected != null)
+#if UNITY_EDITOR
+
+        if (Input.GetKeyDown(KeyCode.D) && jointSelected != null)
         {
             StartCoroutine(board.RotateClockwiseAndClearRoutine());
         }
-        else if(Input.GetKeyDown(KeyCode.A) && jointSelected != null)
+        else if (Input.GetKeyDown(KeyCode.A) && jointSelected != null)
         {
             StartCoroutine(board.RotateCounterAndClearRoutine());
         }
-    }
 
-    private void JointSelection()
-    {
         if (Input.GetMouseButtonDown(0))
         {
-            mousePos = Input.mousePosition;
-            worldPosition = Camera.main.ScreenToWorldPoint(mousePos);
+            clickPos = Input.mousePosition;
+            worldPosition = Camera.main.ScreenToWorldPoint(clickPos);
             if (IsWithinBounds(worldPosition))
             {
                 try
@@ -67,10 +61,69 @@ public class InputManager : MonoBehaviour
                 {
                     Debug.LogWarning("Could not find joint!");
                 }
-            }    
+            }
+        }
+
+#elif UNITY_ANDROID
+     if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                Vector3 touchPos = touch.position;
+                touchPos.z = 10;
+                firstTouch = Camera.main.ScreenToWorldPoint(touchPos);
+            }
+            else if (touch.phase == TouchPhase.Ended)
+            {
+                Vector3 touchPos = touch.position;
+                touchPos.z = 10;
+                lastTouch = Camera.main.ScreenToWorldPoint(touchPos);
+                float swipeDistance = Vector2.Distance(lastTouch, firstTouch);
+                if (swipeDistance < 0.5f)
+                {
+                    JointSelect();
+                }
+                else
+                {
+                    JointRotate();
+                }
+            }
+        }
+        
+#endif
+
+    }
+
+    private void JointSelect()
+    {
+        try
+        {
+            jointSelected = FindObjectOfType<Board>().FindAndSelectNearestJoint(lastTouch);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Could not find joint!");
+        }
+        
+    }
+
+    private void JointRotate()
+    {
+        Vector2 jointPos = jointSelected.transform.position;
+        Vector2 firstTouchPos = firstTouch - jointPos;
+        Vector2 lastTouchPos = lastTouch - jointPos;
+        if(Vector2.SignedAngle(firstTouchPos, lastTouchPos) < 0f)
+        {
+            StartCoroutine(board.RotateClockwiseAndClearRoutine());
+        }
+        else
+        {
+            StartCoroutine(board.RotateCounterAndClearRoutine());
         }
     }
 
+   
 
     private bool IsWithinBounds(Vector3 pos)
     {

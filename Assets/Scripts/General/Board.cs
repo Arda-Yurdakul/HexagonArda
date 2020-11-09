@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditorInternal;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -80,6 +78,7 @@ public class Board : MonoBehaviour
         GameObject joint = Instantiate(jointPrefab, tile.transform.position + new Vector3(rInt * 0.5f, 0.86f, -1f), Quaternion.identity) as GameObject;
         joint.name = "Joint (" + tile.xIndex + "," + tile.yIndex + "-" + jType + ")";
         joint.transform.parent = transform.Find("Joints");
+        joint.GetComponent<SpriteRenderer>().enabled = false;
 
         Joint jointComp = joint.GetComponent<Joint>();
         allJoints.Add(jointComp);
@@ -163,7 +162,7 @@ public class Board : MonoBehaviour
         }
     }
 
-    private void SetupHexes(int offset = 0)
+    private void SetupHexes(int offset = 5)
     {
         if(gameManager.gameState != GameState.Running)
         {
@@ -199,13 +198,14 @@ public class Board : MonoBehaviour
                     {
                         newHex.MoveHex(allTiles[x, y].transform.position.x, allTiles[x, y].transform.position.y, 0.15f);
                     }
+                    print("Spawning");
                 }
                
             }
         }
     }
 
-    private Hex PlaceHexAt(int x, int y, int offset = 0, bool bomb = false)
+    private Hex PlaceHexAt(int x, int y, int offset = 5, bool bomb = false)
     {
         Tile tile = allTiles[x, y];
         int rand = UnityEngine.Random.Range(0, hexPrefabs.Length);
@@ -234,7 +234,7 @@ public class Board : MonoBehaviour
         {
             if (selectedJoint != null)
             {
-                selectedJoint.gameObject.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+                selectedJoint.gameObject.GetComponent<SpriteRenderer>().enabled = false;
                 var highLight = GameObject.FindGameObjectWithTag("Highlight");
                 DestroyImmediate(highLight);
             }
@@ -255,8 +255,8 @@ public class Board : MonoBehaviour
 
             if (nearestJoint != null)
             {
-                SpriteRenderer jointColor = nearestJoint.gameObject.GetComponent<SpriteRenderer>();
-                jointColor.color = new Color(255, 255, 255, 255);
+                SpriteRenderer jointSprite = nearestJoint.gameObject.GetComponent<SpriteRenderer>();
+                jointSprite.enabled = true;
                 selectedJoint = nearestJoint;
                 if (nearestJoint.jointType == JointType.left)
                 {

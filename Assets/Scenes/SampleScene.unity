@@ -972,6 +972,10 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Input
       objectReference: {fileID: 0}
+    - target: {fileID: 4545215471460541917, guid: 09a84d0437bbb4b48b48d078d805de43, type: 3}
+      propertyPath: touchText
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 09a84d0437bbb4b48b48d078d805de43, type: 3}
 --- !u!1001 &6592705937803888874
@@ -1081,11 +1085,11 @@ PrefabInstance:
       objectReference: {fileID: 3238598364179158034, guid: 15985642789f3724eb91641d2048980f, type: 3}
     - target: {fileID: 720145162, guid: a3bc3322654fef84a8bca788da341148, type: 3}
       propertyPath: width
-      value: 9
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 720145162, guid: a3bc3322654fef84a8bca788da341148, type: 3}
       propertyPath: height
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 8769627769552696126, guid: a3bc3322654fef84a8bca788da341148, type: 3}
       propertyPath: m_LocalPosition.x
