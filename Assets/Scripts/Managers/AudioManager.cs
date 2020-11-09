@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//Class responsible for audio
 public class AudioManager : Persistent
 {
     private static AudioManager _instance;

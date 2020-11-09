@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+//Bombs inherit from the Hex class.
 public class Bomb : Hex
 {
     private int timer;
@@ -27,6 +28,7 @@ public class Bomb : Hex
         
     }
 
+    //Ticks down timer. This is called after every valid move
     public void DecreaseTimer()
     {
         timer--;
@@ -40,6 +42,7 @@ public class Bomb : Hex
         }
     }
 
+    //Tells GameManager to end the game
     public void KingdomCome()
     {
         gameManager.EndGame();

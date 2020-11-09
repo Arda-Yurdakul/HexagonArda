@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//Objects that inherit from this class will persist through Scene Changes
+//Objects that inherit from this class will persist through Scene Changes and Reloads
 public class Persistent : MonoBehaviour
 {
     private void Awake()

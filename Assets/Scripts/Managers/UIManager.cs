@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+//Simple Singleton class for updating the UI elements when necessary
 public class UIManager : MonoBehaviour
 {
     private static UIManager _instance;

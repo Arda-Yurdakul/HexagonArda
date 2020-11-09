@@ -33,6 +33,7 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    //Available controls for both UnityEditor and Mobile Platforms
     private void GetInput()
     {
 
@@ -80,7 +81,7 @@ public class InputManager : MonoBehaviour
                 touchPos.z = 10;
                 lastTouch = Camera.main.ScreenToWorldPoint(touchPos);
                 float swipeDistance = Vector2.Distance(lastTouch, firstTouch);
-                if (swipeDistance < 0.5f)
+                if (swipeDistance < 0.5f && IsWithinBounds(firstTouch))
                 {
                     JointSelect();
                 }
@@ -95,6 +96,7 @@ public class InputManager : MonoBehaviour
 
     }
 
+    //Try to find the joint that's nearest to the player's touch 
     private void JointSelect()
     {
         try
@@ -108,6 +110,7 @@ public class InputManager : MonoBehaviour
         
     }
 
+    //According to the swipe position and direction, rotate the pivot point clockwise or counter-clockwise
     private void JointRotate()
     {
         Vector2 jointPos = jointSelected.transform.position;
@@ -124,7 +127,7 @@ public class InputManager : MonoBehaviour
     }
 
    
-
+    //Checks if the recorded touch was within acceptable bounds with regards to the generated board
     private bool IsWithinBounds(Vector3 pos)
     {
         Vector2 worldBounds = board.GetBoardBounds();

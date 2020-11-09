@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IGridElement
+//Simple Interface for grid structure essentials
+public interface IGridElement              
 {
     int xIndex { get; set; }
     int yIndex { get; set; }

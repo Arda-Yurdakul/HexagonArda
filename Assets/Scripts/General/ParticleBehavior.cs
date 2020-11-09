@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+//Particle effects will self-destruct after 5 seconds for memory efficiency
+[RequireComponent(typeof(ParticleSystem))]
 public class ParticleBehavior : MonoBehaviour
 {
     // Start is called before the first frame update

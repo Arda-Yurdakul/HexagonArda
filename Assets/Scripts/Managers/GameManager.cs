@@ -12,6 +12,7 @@ public enum GameState
     GameOver
 }
 
+//Keeps track of the game's state, the score and the Bomb Spawn logic
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private int hexScoreValue;

@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//Class for the game pieces(Hexes).
+[RequireComponent(typeof(SpriteRenderer))]
 public class Hex : MonoBehaviour, IGridElement
 {
     public int xIndex { get; set; }
     public int yIndex { get; set; }
 
-    public HexType hexType;
+    public HexType hexType;                  //HexTypes. Default number in the Editor is 5
     public enum HexType
     {
         Red,
@@ -19,9 +21,8 @@ public class Hex : MonoBehaviour, IGridElement
     }
 
     private Board m_board;
-    private bool m_isMoving;
 
-    public void Init(int x, int y, Board board)
+    public void Init(int x, int y, Board board)         //Called from the Board class to keep pieces updated of their own properties
     {
         xIndex = x;
         yIndex = y;
@@ -31,7 +32,7 @@ public class Hex : MonoBehaviour, IGridElement
     // Start is called before the first frame update
     void Start()
     {
-        m_isMoving = false;
+
     }
 
     // Update is called once per frame
@@ -45,9 +46,10 @@ public class Hex : MonoBehaviour, IGridElement
         StartCoroutine(MoveRoutine(new Vector3(destX, destY, 0), moveTime));
     }
 
+
+    //Lerp Coroutine for moving objects. Uses an Ease-Out style of interpolation
     public IEnumerator MoveRoutine(Vector3 target, float moveTime)
     {
-        m_isMoving = true;
         Vector3 startPosition = transform.position;
 
         bool reachedDestination = false;
@@ -71,7 +73,5 @@ public class Hex : MonoBehaviour, IGridElement
             yield return null;
 
         }
-
-        m_isMoving = false;
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
+//Class for the Tiles that inhabit Hexes. These objects are linked to Joints
 [SelectionBase]
 public class Tile : MonoBehaviour, IGridElement
 {

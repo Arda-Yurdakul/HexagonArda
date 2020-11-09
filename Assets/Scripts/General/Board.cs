@@ -30,7 +30,6 @@ public class Board : MonoBehaviour
     private bool inputBlocked;
     private bool bombSpawn;
     GameManager gameManager;
-    private int[] highlightRotations = { 0, 120, -120 };
 
     void Start()
     {
@@ -52,6 +51,7 @@ public class Board : MonoBehaviour
         
     }
 
+    //Setup joints at appropriate tile intersections
     private void SetupJoints()
     {
         foreach (Tile tile in allTiles)
@@ -71,6 +71,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Each joint will have 3 tiles associated with it.
     private void SetupJointAt(Tile tile, bool isRightJoint)
     {
         int rInt = isRightJoint ? 1 : -1;
@@ -89,6 +90,7 @@ public class Board : MonoBehaviour
         jointComp.Init(pieces, jType, this);
     }
 
+    //The adding of tiles differs according to the joint type
     private List<Tile> AddTilesToJoint(Tile tile, bool isRightJoint)
     {
         List<Tile> pieces = new List<Tile>();
@@ -123,6 +125,7 @@ public class Board : MonoBehaviour
         return pieces;
     }
 
+    //The orthographic size and position components are adjusted according to board dimensions
     private void SetupCamera()
     {
         float aspectRatio = ((float)Screen.width / (float)Screen.height);
@@ -132,6 +135,7 @@ public class Board : MonoBehaviour
         Camera.main.transform.position = new Vector3((float)(width / 1.5f), (float)(height / 1.5f), -10f);
     }
 
+
     private void SetupBoard()
     {
         for (int y = 0; y < height; y++)
@@ -140,6 +144,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Position, name and child the tiles appropriately for one row
     private void SetupRow(int y)
     {
         for (int x = 0; x < width; x++)
@@ -163,6 +168,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Fill in hexes at tiles that do not have hexes associated with them, drop them from a Y offset once Initialized
     private void SetupHexes(int offset = 5)
     {
         if(gameManager.gameState != GameState.Running)
@@ -205,6 +211,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Creates and initializes a random hex from the given options. Will create a regular hex or a bomb according to specification.
     private Hex PlaceHexAt(int x, int y, int offset = 5, bool bomb = false)
     {
         Tile tile = allTiles[x, y];
@@ -228,6 +235,7 @@ public class Board : MonoBehaviour
         return hex.GetComponent<Hex>();
     }
 
+    //Called by the InputManager and selects the closest Joint object to the player Touch
     public Joint FindAndSelectNearestJoint(Vector3 pos)
     {
         if (!inputBlocked)
@@ -281,6 +289,7 @@ public class Board : MonoBehaviour
         
     }
 
+    //Rotates all the hexes of the currently selected joint clockwise and checks for matches afterwards 
     internal void RotateClockwise()
     {
         if(selectedJoint != null)
@@ -299,31 +308,7 @@ public class Board : MonoBehaviour
         }
     }
 
-    private void ClearMatch()
-    {
-        Joint matchJoint = FindMatches();
-        if (matchJoint != null)
-        {
-            matchMade = true;
-            AudioManager.Instance.PlayScoreSFX();
-            GameObject particle = Instantiate(particlePrefab, matchJoint.transform.position, Quaternion.Euler(0, 180, 0));
-            particle.GetComponent<ParticleSystem>().startColor = allHexes[matchJoint.jointTiles[0].xIndex, matchJoint.jointTiles[0].yIndex].GetComponent<SpriteRenderer>().color;
-            if(selectedJoint != null)
-            {
-                selectedJoint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
-            }
-            selectedJoint = null;
-            Destroy(GameObject.FindGameObjectWithTag("Highlight"));
-
-            foreach (Tile tile in matchJoint.jointTiles)
-            {
-                Destroy(allHexes[tile.xIndex, tile.yIndex].gameObject);
-                allHexes[tile.xIndex, tile.yIndex] = null;
-                gameManager.IncreaseScore();
-            }
-        }
-    }
-
+    //Rotates all the hexes of the currently selected joint counter-clockwise and checks for matches afterwards 
     internal void RotateCounterClockwise()
     {
         if(selectedJoint != null)
@@ -342,6 +327,33 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Destroys the matchşng pieces, clears the selection highlight and increases the score accordingly
+    private void ClearMatch()
+    {
+        Joint matchJoint = FindMatches();
+        if (matchJoint != null)
+        {
+            matchMade = true;
+            AudioManager.Instance.PlayScoreSFX();
+            GameObject particle = Instantiate(particlePrefab, matchJoint.transform.position, Quaternion.Euler(0, 180, 0));
+            particle.GetComponent<ParticleSystem>().startColor = allHexes[matchJoint.jointTiles[0].xIndex, matchJoint.jointTiles[0].yIndex].GetComponent<SpriteRenderer>().color;
+            if (selectedJoint != null)
+            {
+                selectedJoint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+            }
+            selectedJoint = null;
+            Destroy(GameObject.FindGameObjectWithTag("Highlight"));
+
+            foreach (Tile tile in matchJoint.jointTiles)
+            {
+                Destroy(allHexes[tile.xIndex, tile.yIndex].gameObject);
+                allHexes[tile.xIndex, tile.yIndex] = null;
+                gameManager.IncreaseScore();
+            }
+        }
+    }
+
+    //Rotates and initializes the positions of all the Hexes that surround a joint
     private IEnumerator ShiftHex(Hex hex, Tile tile, int dir)
     {
         if(hex != null)
@@ -353,11 +365,13 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Helper function that returns width and height
     public Vector2 GetBoardBounds()
     {
         return new Vector2(width, height);
     }
 
+    //Looks for potential matches on the board by looking through the joints
     private Joint FindMatches()
     {
         foreach(Joint joint in allJoints)
@@ -371,6 +385,7 @@ public class Board : MonoBehaviour
         return null;
     }
 
+    //Checks for a match condition on a particular joint
     private bool FindMatchAtJoint(Joint joint)
     {
         Tile tile0 = joint.jointTiles[0];
@@ -388,6 +403,7 @@ public class Board : MonoBehaviour
         
     }
 
+    //Attempts to rotate a joint clockwise 3 times unless interrupted by a match condition, calls to clear, collapse and refill in the case of a match
     public IEnumerator RotateClockwiseAndClearRoutine()
     {
         if (!inputBlocked)
@@ -419,6 +435,7 @@ public class Board : MonoBehaviour
         
     }
 
+    //Attempts to rotate a joint counter-clockwise 3 times unless interrupted by a match condition, calls to clear, collapse and refill in the case of a match
     public IEnumerator RotateCounterAndClearRoutine()
     {
         if (!inputBlocked)
@@ -449,11 +466,13 @@ public class Board : MonoBehaviour
         }
     }
 
+
     public void PlaceHex(Hex hex, Vector3 target)
     {
         hex.transform.position = target;
         hex.transform.rotation = Quaternion.identity;
     }
+
 
     public void CollapseAllColumns()
     {
@@ -463,6 +482,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //The gaps in a column are filled by bringing down hexes at the top
     private void CollapseColumn(int column, float collapseTime)
     {
 
@@ -487,6 +507,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Coroutine that calls to destroy matches and then calls to collapse appropriate columns
     private IEnumerator ClearAndCollapseRoutine()
     {
         int num_iters = 0;
@@ -505,6 +526,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Coroutine that waits for clear and collapses to be finished, then calls to instantiate new Hexes
     private IEnumerator ClearCollapseAndRefillRoutine()
     {
         bombSpawn = false;
@@ -519,6 +541,7 @@ public class Board : MonoBehaviour
         bombSpawn = true;
     }
 
+    //Blows up all the active Hexes. Called when the game is lost
     internal void ClearBoard()
     {
         GameObject[] hexes = GameObject.FindGameObjectsWithTag("Hex");
@@ -532,6 +555,7 @@ public class Board : MonoBehaviour
         }
     }
 
+    //Simple turn animation for Hexes using RotateAround
     public IEnumerator Rotate120(GameObject obj, Joint joint, Tile tile, int dir)
     {
         float timer = 0;

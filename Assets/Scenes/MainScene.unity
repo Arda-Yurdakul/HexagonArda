@@ -863,6 +863,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3610602396152688596, guid: c75b8aed34642c54ab4e801733034d7f, type: 3}
+      propertyPath: bombTarget
+      value: 1000
+      objectReference: {fileID: 0}
     - target: {fileID: 3610602396152688597, guid: c75b8aed34642c54ab4e801733034d7f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
