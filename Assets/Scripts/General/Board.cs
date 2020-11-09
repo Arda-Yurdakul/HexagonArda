@@ -30,6 +30,7 @@ public class Board : MonoBehaviour
     private bool inputBlocked;
     private bool bombSpawn;
     GameManager gameManager;
+    private int[] highlightRotations = { 0, 120, -120 };
 
     void Start()
     {
@@ -198,7 +199,6 @@ public class Board : MonoBehaviour
                     {
                         newHex.MoveHex(allTiles[x, y].transform.position.x, allTiles[x, y].transform.position.y, 0.15f);
                     }
-                    print("Spawning");
                 }
                
             }
@@ -283,18 +283,20 @@ public class Board : MonoBehaviour
 
     internal void RotateClockwise()
     {
-        Tile tile0 = selectedJoint.jointTiles[0];
-        Hex hex0 = allHexes[tile0.xIndex, tile0.yIndex];
-        Tile tile1 = selectedJoint.jointTiles[1];
-        Hex hex1 = allHexes[tile1.xIndex, tile1.yIndex];
-        Tile tile2 = selectedJoint.jointTiles[2];
-        Hex hex2 = allHexes[tile2.xIndex, tile2.yIndex];
+        if(selectedJoint != null)
+        {
+            Tile tile0 = selectedJoint.jointTiles[0];
+            Hex hex0 = allHexes[tile0.xIndex, tile0.yIndex];
+            Tile tile1 = selectedJoint.jointTiles[1];
+            Hex hex1 = allHexes[tile1.xIndex, tile1.yIndex];
+            Tile tile2 = selectedJoint.jointTiles[2];
+            Hex hex2 = allHexes[tile2.xIndex, tile2.yIndex];
 
-        StartCoroutine(ShiftHex(hex0, tile1, -1));
-        StartCoroutine(ShiftHex(hex1, tile2, -1));
-        StartCoroutine(ShiftHex(hex2, tile0, -1));
-        StartCoroutine(ClearCollapseAndRefillRoutine());
-
+            StartCoroutine(ShiftHex(hex0, tile1, -1));
+            StartCoroutine(ShiftHex(hex1, tile2, -1));
+            StartCoroutine(ShiftHex(hex2, tile0, -1));
+            StartCoroutine(ClearCollapseAndRefillRoutine());
+        }
     }
 
     private void ClearMatch()
@@ -306,7 +308,11 @@ public class Board : MonoBehaviour
             AudioManager.Instance.PlayScoreSFX();
             GameObject particle = Instantiate(particlePrefab, matchJoint.transform.position, Quaternion.Euler(0, 180, 0));
             particle.GetComponent<ParticleSystem>().startColor = allHexes[matchJoint.jointTiles[0].xIndex, matchJoint.jointTiles[0].yIndex].GetComponent<SpriteRenderer>().color;
-            selectedJoint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+            if(selectedJoint != null)
+            {
+                selectedJoint.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, 0);
+            }
+            selectedJoint = null;
             Destroy(GameObject.FindGameObjectWithTag("Highlight"));
 
             foreach (Tile tile in matchJoint.jointTiles)
@@ -320,26 +326,27 @@ public class Board : MonoBehaviour
 
     internal void RotateCounterClockwise()
     {
+        if(selectedJoint != null)
+        {
+            Tile tile0 = selectedJoint.jointTiles[0];
+            Hex hex0 = allHexes[tile0.xIndex, tile0.yIndex];
+            Tile tile1 = selectedJoint.jointTiles[1];
+            Hex hex1 = allHexes[tile1.xIndex, tile1.yIndex];
+            Tile tile2 = selectedJoint.jointTiles[2];
+            Hex hex2 = allHexes[tile2.xIndex, tile2.yIndex];
 
-        Tile tile0 = selectedJoint.jointTiles[0];
-        Hex hex0 = allHexes[tile0.xIndex, tile0.yIndex];
-        Tile tile1 = selectedJoint.jointTiles[1];
-        Hex hex1 = allHexes[tile1.xIndex, tile1.yIndex];
-        Tile tile2 = selectedJoint.jointTiles[2];
-        Hex hex2 = allHexes[tile2.xIndex, tile2.yIndex];
-
-        StartCoroutine(ShiftHex(hex0, tile2, 1));
-        StartCoroutine(ShiftHex(hex1, tile0, 1));
-        StartCoroutine(ShiftHex(hex2, tile1, 1));
-        StartCoroutine(ClearCollapseAndRefillRoutine());
-
+            StartCoroutine(ShiftHex(hex0, tile2, 1));
+            StartCoroutine(ShiftHex(hex1, tile0, 1));
+            StartCoroutine(ShiftHex(hex2, tile1, 1));
+            StartCoroutine(ClearCollapseAndRefillRoutine());
+        }
     }
 
     private IEnumerator ShiftHex(Hex hex, Tile tile, int dir)
     {
         if(hex != null)
         {
-            yield return StartCoroutine(Rotate120(hex, selectedJoint, tile, dir));
+            yield return StartCoroutine(Rotate120(hex.gameObject, selectedJoint, tile, dir));
             allHexes[tile.xIndex, tile.yIndex] = hex;
             hex.Init(tile.xIndex, tile.yIndex, this);
             tile.currentHex = hex;
@@ -389,13 +396,12 @@ public class Board : MonoBehaviour
             yield return null;
             matchMade = false;
             int cycles = 0;
-            do
+            while (!matchMade && cycles < 3)
             {
                 cycles++;
                 RotateClockwise();
                 yield return new WaitForSeconds(0.5f);
-            }
-            while (!matchMade && cycles < 3);
+            };
 
 
             if (matchMade)
@@ -486,6 +492,7 @@ public class Board : MonoBehaviour
         int num_iters = 0;
         while(FindMatches() != null && num_iters < 10)
         {
+            matchMade = true;
             ClearMatch();
             yield return new WaitForSeconds(0.2f);
             CollapseAllColumns();
@@ -506,6 +513,7 @@ public class Board : MonoBehaviour
         SetupHexes(5);
     }
 
+
     internal void SpawnBomb()
     {
         bombSpawn = true;
@@ -524,20 +532,20 @@ public class Board : MonoBehaviour
         }
     }
 
-    public IEnumerator Rotate120(Hex hex, Joint joint, Tile tile, int dir)
+    public IEnumerator Rotate120(GameObject obj, Joint joint, Tile tile, int dir)
     {
         float timer = 0;
         while (timer < 0.25f && !matchMade)
         {
-            hex.transform.RotateAround(joint.transform.position, new Vector3(0, 0, dir), speed * Time.deltaTime);
+            obj.transform.RotateAround(joint.transform.position, new Vector3(0, 0, dir), speed * Time.deltaTime);
             yield return null;
             timer += Time.deltaTime;
         }
 
-        if(hex!= null)
+        if(obj!= null)
         {
-            hex.transform.position = tile.transform.position;
-            hex.transform.rotation = Quaternion.identity;
+            obj.transform.position = tile.transform.position;
+            obj.transform.rotation = Quaternion.identity;
         }
 
     }

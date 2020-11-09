@@ -15,12 +15,11 @@ public enum GameState
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private int hexScoreValue;
-
+    [SerializeField] private int bombTarget = 1000;
     Board board;
     private int score;
     private int moves;
     private int highScore;
-    private int bombTarget;
 
     public GameState gameState;
 
@@ -31,7 +30,6 @@ public class GameManager : MonoBehaviour
         board = FindObjectOfType<Board>();
         score = 0;
         moves = 0;
-        bombTarget = 10;
         highScore = PlayerPrefs.GetInt("highScore");
         Invoke("UpdateHUD", 0.25f);
     }
